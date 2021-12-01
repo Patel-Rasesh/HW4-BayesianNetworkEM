@@ -27,16 +27,17 @@ class RandomForest():
 
         self.clt_list = [CLT_RandomForest() for i in range(n_components)]
 
-        for k in range(n_components):
-            # Bootstrap samples before lerning a tree
-            bootstrapSet = ()
-            for i in range(dataset.shape[1]):
-                randomSample = random.rand(0, dataset.shape[0])
-                bootstrapSample = dataset[randomSample]
-                bootstrapSet.append(bootstrapSample)
-            self.clt_list[k].learn(bootstrapSet)
-            self.clt_list[k].update(bootstrapSet, weights[k], hyperparameterR=1000)
-            print(RandomForest.computeLL(bootstrapSet))
+        for itr in range(max_iter):
+            for k in range(n_components):
+                # Bootstrap samples before lerning a tree
+                bootstrapSet = ()
+                for i in range(dataset.shape[1]):
+                    randomSample = random.rand(0, dataset.shape[0])
+                    bootstrapSample = dataset[randomSample]
+                    bootstrapSet.append(bootstrapSample)
+                self.clt_list[k].learn(bootstrapSet)
+                self.clt_list[k].update(bootstrapSet, weights[k], hyperparameterR=1000)
+                print(RandomForest.computeLL(bootstrapSet))
             
     '''
         Compute the log-likelihood score of the dataset
@@ -63,7 +64,8 @@ forest = RandomForest()
 forest.learn(dataset, n_components=2, max_iter=50, hyperparameterR = 1000)
 #print(mix.computeLL(testset)/dataset.shape[0])
 
-# Next steps - 
+# Next steps -
+# 0 - Use Resampling from Scikit-learn
 # 1 - check dimensions of self.mixture_probs
 # 2 - check dimensions of bootstrapset and sample
 # 3 - Run test file in MIXTURE_CLT

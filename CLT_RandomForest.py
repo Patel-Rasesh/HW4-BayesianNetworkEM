@@ -91,8 +91,8 @@ class CLT_RandomForest:
         self.xprob = Util.normalize1d(self.xcounts)
         edgemat = Util.compute_MI_prob(self.xycounts, self.xcounts) * (-1.0)
         # Since this is going to be a directed graph, zero values should not be symmetrical
-        # Randomly select r components from edgemat and make them zero 
-        # r is a hyperparameter from the question - making MI 0 for r variables
+        # Randomly selecting r components from edgemat and making them zero 
+        # r is a hyperparameter - making MI 0 for r variables
         for r in range(hyperparameterR):
             randomRow = random.randrange(0, dataset.shape[0])
             randomCol = random.randrange(0, dataset.shape[0])
