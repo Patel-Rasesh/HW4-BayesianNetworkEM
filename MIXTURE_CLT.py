@@ -12,32 +12,35 @@ class MIXTURE_CLT():
     
     def __init__(self):
         self.n_components = 0 # number of components
-        self.mixture_probs = None # mixture probabilities
+        #self.mixture_probs = None # mixture probabilities
         self.clt_list =[]   # List of Tree Bayesian networks
-
     '''
         Learn Mixtures of Trees using the EM algorithm.
     '''
     def learn(self, dataset, n_components=2, max_iter=50, epsilon=1e-5):
         # For each component and each data point, we have a weight
         self.n_components = n_components
+        self.mixture_probs = np.zeros((n_components,dataset.shape[0]))
         weights=np.zeros((n_components,dataset.shape[0]))
 
         # Randomly initialize the chow-liu trees and the mixture probabilities
         # Your code for random initialization goes here
         # Initializing p(kth_tree)
         randomWeights = np.random.rand(n_components, dataset.shape[0])
-        self.mixture_probs = randomWeights/np.sum(randomWeights)
+        for i in range(randomWeights.shape[0]):
+            self.mixture_probs[i] = randomWeights[i]/np.sum(randomWeights[i])
+        #self.mixture_probs = randomWeights/np.sum(randomWeights)
 
         # Instantiating a variable for storing Chow-Liu probability
         tempDataWeights = np.zeros((n_components, dataset.shape[0]))
+        dataWeights = np.zeros((n_components, dataset.shape[0]))
 
         # For storing the logliklihood from the previous iteration
         secondLL = 0
 
         # Initializing one CLT for each value of the latent variable
         self.clt_list = [CLT() for i in range(n_components)]
-        # Learning each Chow-Liu Tree
+        # Learning Chow-Liu Trees for each value of the hidden variable
         for k in range(n_components):
             self.clt_list[k].learn(dataset)
             
@@ -50,13 +53,17 @@ class MIXTURE_CLT():
                 # getProb gives one value for each example
                 for i, sample in enumerate(dataset):
                     tempDataWeights[k][i] = self.clt_list[k].getProb(sample)
-                #tempDataWeights[k] = self.clt_list[k].getProb(dataset)
-                # DataWeights is of (2, 12k) dimensions
-                dataWeights = tempDataWeights/np.sum(tempDataWeights)
 
-                # weights becomes 2 x 12k 
-            weights = np.multiply(self.mixture_probs, dataWeights)/np.sum(np.multiply(self.mixture_probs, dataWeights))
-
+            # DataWeights is of (2, 12k) dimensions
+            for k in range(n_components):
+                dataWeights[k] = tempDataWeights[k]/np.sum(tempDataWeights[k])
+            
+            print(dataWeights.shape)
+            # weights becomes 2 x 12k 
+            for k in range(n_components):
+                weights[k] = np.multiply(self.mixture_probs[k], dataWeights[k])/np.sum(np.multiply(self.mixture_probs[k], dataWeights[k]))
+            print(weights.shape)
+            
             # M-step: Update the Chow-Liu Trees and the mixture probabilities
             # Your code for M-Step here
             for k in range(n_components):
@@ -132,14 +139,35 @@ for key, values in index.items():
 # validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.valid.data")
 # testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.test.data")
 mix = MIXTURE_CLT()
-print("Please wait, while we learn mixture models ...")
-print("Printing log likelihood after each iteration ...")
+
+# VALIDATION - uncomment the next 10 lines for tuning the value of the hidden variable k
+#print("Please wait, while we learn mixture models ...")
+#print("Printing log likelihood after each iteration ...")
 
 # Latent variable can take values from [2, 5, 10, 20]
-for hiddenVariable in [2, 5, 10, 20]:
-    start = timeit.default_timer()
-    mix.learn(dataset, n_components=hiddenVariable, max_iter=10, epsilon=1e-5)
-    print("Running on the validation set when the hidden variable can take up to", hiddenVariable,"values")
-    print("Log likelihood = ", mix.computeLL(validateset))
-    stop = timeit.default_timer()
-    print("Runtime - ", stop-start)
+# for hiddenVariable in [2, 5, 10, 20]:
+#     start = timeit.default_timer()
+#     mix.learn(dataset, n_components=hiddenVariable, max_iter=10, epsilon=1e-5)
+#     print("Running on the validation set when the hidden variable can take up to", hiddenVariable,"values")
+#     print("Log likelihood = ", mix.computeLL(validateset))
+#     stop = timeit.default_timer()
+#     print("Runtime - ", stop-start)
+
+# TESTING - refer the code starting below
+# Below are the values of a hidden variable (for each dataset) we have gotten based on validation sets
+kTest = [10, 20, 5, 10, 5, 10, 10, 2, 10, 20]
+hiddenVariableList = defaultdict(int)
+i = 0
+for key, values in index.items():
+    hiddenVariableList[key] = kTest[i]
+    i += 1
+
+start = timeit.default_timer()
+print("Learning models for appropriate value of the hidden variable before running it on the testset ...")
+print("Average runtime is 20mins")
+print("NOTE - program is printing log likelihood after each iteration ...")
+mix.learn(dataset, n_components=hiddenVariableList[int(selection)], max_iter=10, epsilon=1e-5)
+print("Running on the testset when the hidden variable can take up to", hiddenVariableList[selection],"values")
+print("Log likelihood = ", mix.computeLL(testset))
+stop = timeit.default_timer()
+print("Runtime - ", stop-start)
