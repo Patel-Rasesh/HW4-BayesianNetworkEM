@@ -71,7 +71,8 @@ class MIXTURE_CLT():
             #     self.weights[k] = weights[k]/np.sum(weights[k])
             
             for k in range(n_components):
-                self.weights[k] = np.sum(weights[k])/np.sum(np.sum(weights))
+                #self.weights[k] = np.sum(weights[k])/np.sum(np.sum(weights))
+                self.mixture_probs[k] = np.sum(weights[k])/np.sum(np.sum(weights))
 
             # Compare two consecutive log li    klihoods. And if the difference is less than Epsilon, break/converge.
             # Since logliklihood is only going to increase, we can take difference accordingly
@@ -105,15 +106,17 @@ class MIXTURE_CLT():
             #llTemp = 0
             for k in range(self.n_components):
                 #llTemp += np.sum(np.log(np.multiply(np.where(dataset[sample] == 1, self.weights[k][sample], 1-self.weights[k][sample]), self.clt_list[k].getProb(dataset[sample]))))
-                llTemp += np.log(self.weights[k]) + np.log(self.clt_list[k].getProb(dataset[sample]))
+                #llTemp += np.log(self.weights[k]) + np.log(self.clt_list[k].getProb(dataset[sample]))
+                #llTemp += np.multiply(self.weights[k], self.clt_list[k].getProb(dataset[sample]))
+                llTemp += np.multiply(self.mixture_probs[k], self.clt_list[k].getProb(dataset[sample]))
                 #print(np.log(self.weights[k]))
                 #print(np.log(self.clt_list[k].getProb(dataset[sample])))
                 #break
            # break
                 #ll += np.log(np.dot(self.mixture_probs[k], self.clt_list[k].getProb(dataset[sample])))
                 #llTemp += np.prod(np.where(dataset[sample] == 1, self.weights[k][sample], 1-self.weights[k][sample]))
-            #ll += np.log(llTemp)
-        return llTemp/dataset.shape[0]
+            ll += np.log(llTemp)
+        return ll
     
 '''
     After you implement the functions learn and computeLL, you can learn a mixture of trees using
@@ -160,10 +163,10 @@ print("Please wait, while we learn mixture models for...")
 print(index[int(selection)][1])
 print("Printing log likelihood after each iteration ...")
 
-# Latent variable can take values from [2, 5, 10, 20]
+#Latent variable can take values from [2, 5, 10, 20]
 for hiddenVariable in [2, 5, 20, 10]:
     start = timeit.default_timer()
-    mix.learn(dataset, n_components=hiddenVariable, max_iter=5, epsilon=1e-5)
+    mix.learn(dataset, n_components=hiddenVariable, max_iter=15, epsilon=1e-5)
     print("Running on the validation set when the hidden variable can take up to", hiddenVariable,"values")
     print("Log likelihood = ", mix.computeLL(validateset))
     stop = timeit.default_timer()
@@ -171,7 +174,7 @@ for hiddenVariable in [2, 5, 20, 10]:
 
 # TESTING - refer the code starting below
 # Below are the values of a hidden variable (for each dataset) we have gotten based on validation sets
-# kTest = [10, 20, 5, 10, 5, 10, 10, 2, 10, 20]
+# kTest = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 # hiddenVariableList = defaultdict(int)
 # i = 0
 # for key, values in index.items():
