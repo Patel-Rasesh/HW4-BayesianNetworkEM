@@ -94,10 +94,9 @@ class CLT_RandomForest:
         # Randomly selecting r components from edgemat and making them zero 
         # r is a hyperparameter - making MI 0 for r variables
         for r in range(hyperparameterR):
-            randomRow = random.randrange(0, dataset.shape[0])
-            randomCol = random.randrange(0, dataset.shape[0])
+            randomRow = random.randrange(0, dataset.shape[1])
+            randomCol = random.randrange(0, dataset.shape[1])
             edgemat[randomRow][randomCol] = 0
-
         Tree = minimum_spanning_tree(csr_matrix(edgemat))
         self.topo_order, self.parents = depth_first_order(Tree, 0, directed=False)
 
@@ -133,3 +132,8 @@ class CLT_RandomForest:
                 assigny = sample[y]
                 prob *= self.xyprob[x, y, assignx, assigny] / self.xprob[y, assigny]
         return prob
+
+dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
+clt_random = CLT_RandomForest()
+weights = np.ones((2,dataset.shape[0]))
+clt_random.update(dataset, weights[0], hyperparameterR=10)

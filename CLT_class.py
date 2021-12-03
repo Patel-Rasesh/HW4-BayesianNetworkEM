@@ -130,10 +130,10 @@ class CLT:
 dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
     
 # Learing using Chow-Liu Algorithm
-clt=CLT()
-clt.learn(dataset)
-n_components = 2 
-weights = np.ones((n_components, dataset.shape[0]))
+# clt=CLT()
+# clt.learn(dataset)
+# n_components = 2 
+# weights = np.ones((n_components, dataset.shape[0]))
 # # Computing the average log likelihood of a dataset 
 # for k in range(n_components):
 #    print(clt.computeLL(dataset[k])/dataset.shape[0])
@@ -144,4 +144,4 @@ weights = np.ones((n_components, dataset.shape[0]))
 # for sample in range(dataset.shape[0]):
 #     print(clt.computeLL(dataset[sample]))/dataset.shape[0]
 
-print(clt.topo_order.shape)
+# print(clt.topo_order.shape)

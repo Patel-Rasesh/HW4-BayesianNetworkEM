@@ -5,6 +5,8 @@ import sys
 import timeit
 import os
 from collections import defaultdict
+
+from numpy.compat.py3k import contextlib_nullcontext
 from Util import *
 from CLT_class import CLT
 
@@ -20,15 +22,18 @@ class MIXTURE_CLT():
     def learn(self, dataset, n_components, max_iter=50, epsilon=1e-5):
         # For each component and each data point, we have a weight
         self.n_components = n_components
-        self.mixture_probs = np.zeros((n_components,dataset.shape[0]))
+        #self.mixture_probs = np.zeros((n_components,dataset.shape[0]))
+        self.mixture_probs = np.zeros(n_components)
         weights=np.zeros((n_components,dataset.shape[0]))
+        #self.weights = np.zeros((n_components,dataset.shape[0]))
+        self.weights = np.zeros(n_components)
 
         # Randomly initialize the chow-liu trees and the mixture probabilities
         # Your code for random initialization goes here
         # Initializing p(kth_tree)
         randomWeights = np.random.rand(n_components, dataset.shape[0])
         for i in range(randomWeights.shape[0]):
-            self.mixture_probs[i] = randomWeights[i]/np.sum(randomWeights[i])
+            self.mixture_probs = randomWeights[i]/np.sum(randomWeights[i])
         # Instantiating a variable for storing Chow-Liu probability
         tempDataWeights = np.zeros((n_components, dataset.shape[0]))
         dataWeights = np.zeros((n_components, dataset.shape[0]))
@@ -50,30 +55,25 @@ class MIXTURE_CLT():
             for k in range(n_components):
                 # getProb gives one value for each example
                 
-                #for i, sample in enumerate(dataset):
-                tempDataWeights[k] = np.apply_along_axis(self.clt_list[k].getProb, 1, dataset)
+                for i, sample in enumerate(dataset):
+                #tempDataWeights[k] = np.apply_along_axis(self.clt_list[k].getProb, 1, dataset)
+                    tempDataWeights[k][i] = self.clt_list[k].getProb(sample)
 
-                #print(tempDataWeights[k])
+                # DataWeights is of (2, 12k) dimensions
                 dataWeights[k] = tempDataWeights[k]/np.sum(tempDataWeights[k])
-                #print(np.sum(dataWeights[k]))
+                # weights becomes (n_component x dataset.shape[0]) 
                 weights[k] = np.multiply(self.mixture_probs[k], dataWeights[k])/np.sum(np.multiply(self.mixture_probs[k], dataWeights[k]))
+                # M-step: Update the Chow-Liu Trees and the mixture probabilities
+                # Your code for M-Step here
                 self.clt_list[k].update(dataset, weights[k])
-            # DataWeights is of (2, 12k) dimensions
+           
             # for k in range(n_components):
-            #     dataWeights[k] = tempDataWeights[k]/np.sum(tempDataWeights[k])
-            # for k in range(n_components):
-            #     self.mixture_probs[k] = weights[k]
-
-            # # # weights becomes (n_component x dataset.shape[0]) 
-            # for k in range(n_components):
-            #     weights[k] = np.multiply(self.mixture_probs[k], dataWeights[k])/np.sum(np.multiply(self.mixture_probs[k], dataWeights[k]))
-            #     print(np.sum(weights[k]))
-            # # M-step: Update the Chow-Liu Trees and the mixture probabilities
-            # # Your code for M-Step here
-            # for k in range(n_components):
-            #     self.clt_list[k].update(dataset, weights[k])
+            #     self.weights[k] = weights[k]/np.sum(weights[k])
             
-            # Compare two consecutive log liklihoods. And if the difference is less than Epsilon, break/converge.
+            for k in range(n_components):
+                self.weights[k] = np.sum(weights[k])/np.sum(np.sum(weights))
+
+            # Compare two consecutive log li    klihoods. And if the difference is less than Epsilon, break/converge.
             # Since logliklihood is only going to increase, we can take difference accordingly
             if(itr == 0):
                 print("Debug print")
@@ -84,10 +84,10 @@ class MIXTURE_CLT():
                 print("Entered in the iteration ... ", itr)
                 firstLL = mix.computeLL(dataset)
                 print(firstLL)
-                if(abs(firstLL - secondLL) < epsilon):
-                    print("Exiting because the increase in log likelihood value is less than epsilon ... ")
-                    print(secondLL)
-                    break
+                # if((firstLL - secondLL) < epsilon):
+                #     print("Exiting because the increase in log likelihood value is less than epsilon ... ")
+                #     print(secondLL)
+                #     break
                 secondLL = firstLL
     '''
         Compute the log-likelihood score of the dataset
@@ -100,24 +100,20 @@ class MIXTURE_CLT():
         #   Hint:   Likelihood of a data point "x" is sum_{c} P(c) T(x|c)
         #           where P(c) is mixture_prob of cth component and T(x|c) is the probability w.r.t. chow-liu tree at c
         #           To compute T(x|c) you can use the function given in class CLT
-        
-        for k in range(self.n_components):
-           # temp = np.sum(self.clt_list[k].computeLL(dataset))/self.clt_list[k].computeLL(dataset)
-            #ll += np.sum((self.clt_list[k].computeLL(dataset) * self.mixture_probs[k])) 
-            for sample in range(dataset.shape[0]):
-
-                ll += np.prod(np.where(dataset[sample] == 1, self.mixture_probs[k][sample], 1-self.mixture_probs[k][sample]))
-                # for variable in range(dataset.shape[1]):
-                #     if(dataset[sample][variable] == 1):
-                #         ll += self.mixture_probs[k][sample] * self.clt_list[k].computeLL(dataset)
-                #     elif(dataset[sample][variable] == 0):
-                #         ll += (1-self.mixture_probs[k][sample]) * self.clt_list[k].computeLL(dataset)
-            #print(self.mixture_probs[k])
-        #temp = 0
-            ll * self.clt_list[k].computeLL(dataset)
-        # for k in range(self.n_components):
-        #     temp += self.clt_list[k].computeLL(dataset)
-        return ll
+        llTemp = 0
+        for sample in range(dataset.shape[0]):
+            #llTemp = 0
+            for k in range(self.n_components):
+                #llTemp += np.sum(np.log(np.multiply(np.where(dataset[sample] == 1, self.weights[k][sample], 1-self.weights[k][sample]), self.clt_list[k].getProb(dataset[sample]))))
+                llTemp += np.log(self.weights[k]) + np.log(self.clt_list[k].getProb(dataset[sample]))
+                #print(np.log(self.weights[k]))
+                #print(np.log(self.clt_list[k].getProb(dataset[sample])))
+                #break
+           # break
+                #ll += np.log(np.dot(self.mixture_probs[k], self.clt_list[k].getProb(dataset[sample])))
+                #llTemp += np.prod(np.where(dataset[sample] == 1, self.weights[k][sample], 1-self.weights[k][sample]))
+            #ll += np.log(llTemp)
+        return llTemp/dataset.shape[0]
     
 '''
     After you implement the functions learn and computeLL, you can learn a mixture of trees using
@@ -148,25 +144,26 @@ print("\nEnter the serial number for which dataset to run")
 selection = input()
 for key, values in index.items():
     if(key == int(selection)):
+        dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][1])
+        validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][2])
+        testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][0])
 
-        dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
-        validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.valid.data")
-        testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.test.data")
+        # dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+)
+        # validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.valid.data")
+        # testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.test.data")
         break
 
-# dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
-# validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.valid.data")
-# testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.test.data")
 mix = MIXTURE_CLT()
 
 # VALIDATION - uncomment the next 10 lines for tuning the value of the hidden variable k
-print("Please wait, while we learn mixture models ...")
+print("Please wait, while we learn mixture models for...")
+print(index[int(selection)][1])
 print("Printing log likelihood after each iteration ...")
 
 # Latent variable can take values from [2, 5, 10, 20]
-for hiddenVariable in [2, 5, 10, 20]:
+for hiddenVariable in [2, 5, 20, 10]:
     start = timeit.default_timer()
-    mix.learn(dataset, n_components=hiddenVariable, max_iter=10, epsilon=1e-5)
+    mix.learn(dataset, n_components=hiddenVariable, max_iter=5, epsilon=1e-5)
     print("Running on the validation set when the hidden variable can take up to", hiddenVariable,"values")
     print("Log likelihood = ", mix.computeLL(validateset))
     stop = timeit.default_timer()
