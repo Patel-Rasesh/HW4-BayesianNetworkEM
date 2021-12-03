@@ -97,6 +97,7 @@ class CLT_RandomForest:
             randomRow = random.randrange(0, dataset.shape[1])
             randomCol = random.randrange(0, dataset.shape[1])
             edgemat[randomRow][randomCol] = 0
+            edgemat[randomCol][randomRow] = 0
         Tree = minimum_spanning_tree(csr_matrix(edgemat))
         self.topo_order, self.parents = depth_first_order(Tree, 0, directed=False)
 
