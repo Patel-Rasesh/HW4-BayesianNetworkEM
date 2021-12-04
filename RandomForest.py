@@ -31,14 +31,8 @@ class RandomForest():
         # For RandomForest, weigts can be uniform - keeping them 1
         weights=np.ones((n_components,dataset.shape[0]))
         self.mixture_probs = [1/n_components]*n_components
-        # randomWeights = np.random.rand(n_components, dataset.shape[0])
-        # for i in range(randomWeights.shape[0]):
-        #     self.mixture_probs = randomWeights[i]/np.sum(randomWeights[i])
-
+    
         self.clt_list = [CLT_RandomForest() for i in range(n_components)]
-        # self.weights = np.zeros(n_components)
-        # for k in range(n_components):
-        #     self.weights[k] = np.sum(weights[k])/np.sum(np.sum(weights))
         
         for k in range(n_components):
             resampledData = resample(dataset)
@@ -55,35 +49,10 @@ class RandomForest():
         for k in range(self.n_components):
             ll += self.clt_list[k].computeLL(dataset)
         return ll/dataset.shape[0]
-        #llTemp = 0
-        # for sample in range(dataset.shape[0]):
-        #     for k in range(self.n_components):
-        #         llTemp += np.multiply(self.clt_list[k].getProb(sample), self.mixture_probs[k])
-        #     ll = np.log(llTemp)
-        #return ll
-
-
-# Making python file runtime ready
-# with open("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\RandomForestOutput.txt", 'w') as file:
-#     with contextlib.redirect_stdout(file):
-
-# print("\nEnter the serial number for which dataset to run")
-# selection = input()
-# for key, values in index.items():
-#     if(key == int(selection)):
-#         dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][1])
-#         validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][2])
-#         testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][0])
-
-#         # dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+)
-#         # validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.valid.data")
-#         # testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.test.data")
-#         break
 
 forest = RandomForest()
 
-# VALIDATION - uncomment the next 10 lines for tuning the value of the hidden variable k
-
+# Reading and storing the respective dataset files
 serialNumber = 0
 index = defaultdict(list)
 for i, file in enumerate(os.listdir("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset")):
@@ -109,6 +78,7 @@ for key, values in index.items():
         testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][0])
         break
 
+# Validation 
 # for key, values in index.items():
 #     print("Running the model for ", index[key][1])
 #     dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][1])
@@ -135,11 +105,13 @@ for key, values in index.items():
     paramRList[key] = paramR[i]
     i += 1
 
-start = timeit.default_timer()
-print("Evaluating the model for appropriate values of hyperparameters ...")
-forest.learn(dataset, n_components=hiddenVariableList[int(selection)], hyperparameterR = paramRList[int(selection)])
-print("\nThe number of values the hidden variable can take is k = ", hiddenVariableList[int(selection)])
-print("Value of parameter R = ", paramRList[int(selection)])
-print("\nLog likelihood = ", forest.computeLL(testset))
-stop = timeit.default_timer()
-print("Runtime - ", stop-start)
+print("Running the model 5 times and printing log likelihood for each initialization")
+for i in range(5):
+    start = timeit.default_timer()
+    print("Evaluating the model for appropriate values of hyperparameters ...")
+    forest.learn(dataset, n_components=hiddenVariableList[int(selection)], hyperparameterR = paramRList[int(selection)])
+    print("\nThe number of values the hidden variable can take is k = ", hiddenVariableList[int(selection)])
+    print("Value of parameter R = ", paramRList[int(selection)])
+    print("\nLog likelihood = ", forest.computeLL(testset))
+    stop = timeit.default_timer()
+    print("Runtime - ", stop-start)

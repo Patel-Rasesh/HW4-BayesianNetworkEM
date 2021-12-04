@@ -90,12 +90,12 @@ class CLT_RandomForest:
         self.xyprob = Util.normalize2d(self.xycounts)
         self.xprob = Util.normalize1d(self.xcounts)
         edgemat = Util.compute_MI_prob(self.xycounts, self.xcounts) * (-1.0)
-        # Since this is going to be a directed graph, zero values should not be symmetrical
         # Randomly selecting r components from edgemat and making them zero 
         # r is a hyperparameter - making MI 0 for r variables
         for r in range(hyperparameterR):
             randomRow = random.randrange(0, dataset.shape[1])
             randomCol = random.randrange(0, dataset.shape[1])
+            # Because of symmetry of the mutual information matrix
             edgemat[randomRow][randomCol] = 0
             edgemat[randomCol][randomRow] = 0
         Tree = minimum_spanning_tree(csr_matrix(edgemat))
@@ -133,8 +133,3 @@ class CLT_RandomForest:
                 assigny = sample[y]
                 prob *= self.xyprob[x, y, assignx, assigny] / self.xprob[y, assigny]
         return prob
-
-dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
-clt_random = CLT_RandomForest()
-weights = np.ones((2,dataset.shape[0]))
-clt_random.update(dataset, weights[0], hyperparameterR=10)
