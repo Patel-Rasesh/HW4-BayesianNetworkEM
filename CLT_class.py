@@ -12,6 +12,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
 from scipy.sparse.csgraph import depth_first_order
 import sys
+from collections import defaultdict
+import os
 import time
 
 
@@ -125,23 +127,28 @@ class CLT:
                 prob *= self.xyprob[x, y, assignx, assigny] / self.xprob[y, assigny]
         return prob
 
-# Reading the dataset
-    
-dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\accidents.ts.data")
-    
-# Learing using Chow-Liu Algorithm
-clt=CLT()
-clt.learn(dataset)
-# n_components = 2 
-# weights = np.ones((n_components, dataset.shape[0]))
-# # Computing the average log likelihood of a dataset 
-# for k in range(n_components):
-#    print(clt.computeLL(dataset[k])/dataset.shape[0])
-# # for k in range(n_components):
-# #     clt.update(dataset, weights[k])
-#print("For all")
-#print(clt.computeLL(dataset)/dataset.shape[0])
-# for sample in range(dataset.shape[0]):
-#     print(clt.computeLL(dataset[sample]))/dataset.shape[0]
+# Uncomment these to run only CLT  
+# serialNumber = 0
+# index = defaultdict(list)
+# for i, file in enumerate(os.listdir("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset")):
+#     if(i % 3 == 0):
+#         serialNumber += 1
+#     index[serialNumber].append(file)
 
-# print(clt.topo_order.shape)
+# print("Serial number\t Dataset\n")
+# for key, values in index.items():
+#     print(key, "\t\t", values[1])
+
+# print("\nEnter the serial number for which dataset to run")
+# selection = input()
+# for key, values in index.items():
+#     if(key == int(selection)):
+#         dataset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][1])
+#         validateset = Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][2])
+#         testset=Util.load_dataset("C:\\Users\\Friday\\Desktop\\Fall21\\CS6375\\Homework4\\dataset\\"+index[key][0])
+#         break
+# # Learing using Chow-Liu Algorithm
+# for i in range(5):
+#     clt=CLT()
+#     clt.learn(dataset)
+#     print(clt.computeLL(testset)/testset.shape[0])
